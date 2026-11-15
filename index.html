@@ -172,7 +172,7 @@ body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/4
 .pool-chip{padding-right:6px}
 .mv{width:auto;min-height:30px;padding:3px 8px;border-radius:8px;font-size:.85rem}
 /* intro au scroll */
-.intro{height:260vh;position:relative}
+.intro{height:320vh;position:relative}
 .stage{position:sticky;top:0;height:100vh;overflow:hidden;display:grid;place-items:center;background:radial-gradient(900px 520px at 50% 62%,#0a2a66 0%,#04122b 46%,#02050d 100%)}
 #fx{position:absolute;inset:0;width:100%;height:100%}
 .logo{position:absolute;top:22px;left:max(20px,4vw);font:700 1rem var(--font-d);letter-spacing:.08em}
@@ -191,6 +191,36 @@ body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/4
 .tag{position:absolute;padding:6px 14px;border:1px solid var(--line-2);border-radius:999px;font-size:.85rem;color:var(--cy);background:rgba(4,18,43,.75);opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s}
 .tag.on{opacity:1;transform:none}
 .hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.9rem;transition:opacity .4s}
+
+/* ===== Mobile ===== */
+.stage{height:100vh;height:100svh}
+body{overflow-x:clip}
+.groups{grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr))}
+.chip{max-width:100%}
+@media (max-width:700px){
+  .intro{height:420vh;height:420svh}
+  .intro h1{font-size:clamp(2.4rem,15vw,4rem)}
+  .tag{font-size:.74rem;padding:5px 10px}
+  .sub{font-size:.95rem;margin:16px auto 20px}
+  .wrap{width:calc(100% - 28px)}
+  .step{padding:36px 0;gap:16px}
+  .aside h2{font-size:1.3rem}
+  .seg{display:flex;width:100%}.seg button{flex:1;padding:10px 8px;font-size:.93rem}
+  table.tbl{min-width:360px}
+  .tbl th:nth-child(3){width:104px!important}
+  .tbl .cell{padding:7px 6px}
+  .export{padding:18px}
+  .export .opts{gap:10px}
+  .btn{padding:10px 14px}
+  .choices{grid-template-columns:1fr}
+  .pool-chip select{max-width:130px}
+  footer .row{flex-direction:column;align-items:flex-start;gap:12px}
+}
+
+.hint{display:flex;align-items:center;gap:10px;padding:9px 18px;border-radius:999px;background:rgba(2,8,22,.94);border:1px solid var(--line-2);color:#e6f0ff;font-weight:600;z-index:2;box-shadow:0 0 24px -6px rgba(47,139,255,.6);bottom:max(26px,env(safe-area-inset-bottom))}
+.mouse{width:16px;height:24px;border:2px solid var(--cy);border-radius:10px;position:relative;flex:none}
+.mouse::after{content:"";position:absolute;left:50%;top:4px;width:3px;height:5px;margin-left:-1.5px;border-radius:2px;background:var(--cy);animation:wh 1.4s infinite}
+@keyframes wh{to{transform:translateY(7px);opacity:0}}
 </style>
 </head>
 <body>
@@ -199,17 +229,17 @@ body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/4
   <div class="stage">
     <canvas id="fx" aria-hidden="true"></canvas>
     <span class="logo">UFHB</span>
-    <span class="tag" data-at=".18" style="top:16%;left:8%">Python</span>
-    <span class="tag" data-at=".3" style="top:24%;right:8%">Machine learning</span>
-    <span class="tag" data-at=".42" style="bottom:24%;left:9%">Big Data</span>
-    <span class="tag" data-at=".54" style="bottom:15%;right:11%">Statistiques</span>
-    <span class="tag" data-at=".66" style="top:11%;left:42%">Réseaux de neurones</span>
+    <span class="tag" data-at=".06" style="top:16%;left:8%">Python</span>
+    <span class="tag" data-at=".14" style="top:24%;right:8%">Machine learning</span>
+    <span class="tag" data-at=".22" style="bottom:24%;left:9%">Big Data</span>
+    <span class="tag" data-at=".3" style="bottom:15%;right:11%">Statistiques</span>
+    <span class="tag" data-at=".38" style="top:11%;left:42%">Réseaux de neurones</span>
     <div class="center">
       <h1 aria-label="UFHB Data Science et IA"><span class="ln ln1"></span><span class="ln ln2"></span><span class="ln ln3"></span></h1>
       <p class="sub" id="sub">Formez vos groupes d'exposé et attribuez les thèmes, au hasard ou à la main.</p>
       <a class="btn primary go" id="go" href="#s1">Commencer</a>
     </div>
-    <span class="hint" id="hint">Faites défiler</span>
+    <span class="hint" id="hint"><i class="mouse"></i>Faites défiler</span>
   </div>
 </header>
 
@@ -242,7 +272,7 @@ body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/4
           <div class="row">
             <button class="btn" type="button" id="btnFile">Choisir un fichier</button>
             <button class="btn ghost" type="button" id="btnTemplate">Télécharger le modèle</button>
-            <button class="btn ghost" type="button" id="btnDemo">Charger un exemple</button>
+            <button class="btn ghost" type="button" id="btnDemo">Charger la liste de la classe</button>
           </div>
           <input type="file" id="file" accept=".xlsx,.csv,.txt" hidden>
         </div>
@@ -270,7 +300,7 @@ body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/4
     <div class="split">
       <div class="stack" style="gap:12px">
         <label class="field"><span>Un thème par ligne</span>
-          <textarea id="themeInput" rows="6" placeholder="Intelligence artificielle et société&#10;Cybersécurité&#10;Cloud computing"></textarea></label>
+          <textarea id="themeInput" rows="6" placeholder="Écrivez un thème par ligne"></textarea></label>
         <div class="row"><button class="btn" type="button" id="btnAddThemes">Ajouter les thèmes</button><button class="btn ghost danger" type="button" id="btnClearThemes">Vider la liste</button></div>
       </div>
       <div>
@@ -366,7 +396,7 @@ const tags=[...intro.querySelectorAll('.tag')],sub=document.getElementById('sub'
 const caret=document.createElement('i');caret.className='caret';
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const layers=[4,6,6,3],S='01∑λπ∇σ≈∫θ';
-let W,H,p=reduce?1:0,tp=p,nodes=[],cols=[],shown=-1,live=true;
+let W,H,p=reduce?1:0,sp=p,st=null,tp=p,nodes=[],cols=[],shown=-1,live=true;
 function build(){
   nodes=[];layers.forEach((n,l)=>{for(let i=0;i<n;i++)nodes.push({l,i,x:W*(.12+.76*l/(layers.length-1)),y:H*(.22+.56*(i+.5)/n)});});
   cols=Array.from({length:Math.ceil(W/30)},(_,i)=>({x:i*30+6,y:Math.random()*H,v:.6+Math.random()*1.2,s:Array.from({length:12},()=>S[Math.floor(Math.random()*S.length)])}));
@@ -374,7 +404,7 @@ function build(){
 function resize(){const d=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);build();}
 const cl=(v)=>Math.max(0,Math.min(1,v));
 function text(){
-  const c=Math.round(cl(p/.7)*total);if(c===shown)return;shown=c;
+  const c=Math.round(cl(p/.4)*total);if(c===shown)return;shown=c;
   const a=L[0].slice(0,c),b=L[1].slice(0,Math.max(0,c-4)),d=L[2].slice(0,Math.max(0,c-16));
   lines[0].textContent=a;lines[1].textContent=b;lines[2].textContent=d;
   lines[c>16?2:c>4?1:0].appendChild(caret);
@@ -392,13 +422,13 @@ function draw(ts){
   nodes.forEach(n=>{const v=cl(rv-n.l+.3);if(v<=0)return;ctx.shadowColor='#22d3ee';ctx.shadowBlur=14*v;ctx.fillStyle=`rgba(34,211,238,${.9*v})`;ctx.beginPath();ctx.arc(n.x,n.y,3.5+(reduce?0:Math.sin(t*2+n.i)*.8),0,6.3);ctx.fill();});
   ctx.shadowBlur=0;
 }
-function scroll(){const m=intro.offsetHeight-innerHeight;tp=cl(-intro.getBoundingClientRect().top/m);}
+function scroll(){const m=intro.offsetHeight-intro.firstElementChild.offsetHeight;tp=cl(-intro.getBoundingClientRect().top/m);}
 function ui(){
   text();
   tags.forEach(x=>x.classList.toggle('on',p>=+x.dataset.at));
-  sub.classList.toggle('on',p>.75);go.classList.toggle('on',p>.85);hint.style.opacity=p>.04?0:1;
+  sub.classList.toggle('on',p>.45);go.classList.toggle('on',p>.55);hint.style.opacity=sp>.04?0:1;
 }
-function loop(ts){p+=(tp-p)*.12;ui();if(live)draw(ts);requestAnimationFrame(loop);}
+function loop(ts){if(st===null)st=ts;sp+=(tp-sp)*.12;p=sp;ui();if(live)draw(ts);requestAnimationFrame(loop);}
 new IntersectionObserver(e=>{live=e[0].isIntersecting;}).observe(intro);
 addEventListener('resize',resize);addEventListener('scroll',scroll,{passive:true});
 resize();scroll();if(reduce){p=1;ui();draw(0);}else requestAnimationFrame(loop);
@@ -493,20 +523,23 @@ const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).queryS
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>n.toFixed(2).replace('.',',');
 const uid=()=>Math.random().toString(36).slice(2,10);
-const LS='exposes-groupes-v1';
+const LS='exposes-groupes-v2';
+const CLASS=["ADJE Raoul Eunice","Arama Aly A","Ballo Cheick Ahmed Tidiane Tamba","Dagnogo Dognimin Ibrahim","Dago Emmanuel Josué","Dan Esther Laetitia Carmel","DJE ANGE PHILIPPE YVAN","FLAN Noumani Nathalie Marcelle","Gnahoré Légré Grâce Emmanuella","Goumbo Bi Arthur Jean Désiré","Keita Saguidi Gaoussou","Koffi Badou Christian Yannick","KONE GNIDIAN CARINE ZENAB","N'GATTA Diakité Ahou Cindy Aurélie S.","N'guessan Frédéric Samuel Hylann","Ntambua Kalala Jeremie","Soumahoro Souleymane","Yao koffi salifou dieudonné","Diallo Ibrahim"];
 
 const state={
-  info:{title:"Répartition des groupes d'exposés",school:'Université Félix Houphouët-Boigny (UFHB)',year:academicYear(),filiere:'',niveau:'',matiere:'',prof:'',date:''},
+  info:{title:"Répartition des groupes d'exposés",school:'Université Félix Houphouët-Boigny (UFHB)',year:academicYear(),filiere:'Data Science et IA',niveau:'Master 1',matiere:'',prof:'',date:''},
   students:[],themes:[],
-  set:{sizeMode:'count',count:5,perGroup:5,dist:'random',themeMode:'random',minGirls:1,allowRepeat:false},
+  set:{sizeMode:'count',count:5,perGroup:5,dist:'random',themeMode:'random',minGirls:0,allowRepeat:false},
   fmt:'xlsx',opt:{avg:true,list:true},result:null,sel:null
 };
 
 /* ---------- stockage local ---------- */
+let hadSaved=false;
 try{
-  const j=JSON.parse(localStorage.getItem(LS)||'null');
+  const j=JSON.parse(localStorage.getItem(LS)||'null');hadSaved=!!j;
   if(j){Object.assign(state.info,j.info||{});state.students=j.students||[];state.themes=j.themes||[];Object.assign(state.set,j.set||{});state.fmt=j.fmt||'xlsx';Object.assign(state.opt,j.opt||{});}
 }catch(e){}
+if(!hadSaved)state.students=CLASS.map(n=>({id:uid(),name:n,sex:'',avg:null}));
 if(state.set.dist!=='manual')state.set.dist='random';
 let saveT;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({info:state.info,students:state.students,themes:state.themes,set:state.set,fmt:state.fmt,opt:state.opt}));}catch(e){}},250);}
@@ -582,11 +615,7 @@ $('#btnTemplate').onclick=()=>{
   const csv='\ufeffNom;Sexe\r\nKOUASSI Aya;F\r\nTRAORÉ Ibrahim;M\r\nYAO Marie-Ange;F\r\n';
   download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'modele-liste-eleves.csv');
 };
-$('#btnDemo').onclick=()=>{
-  const names=['KOUASSI Aya;F;14,5','TRAORÉ Ibrahim;M;12','YAO Marie-Ange;F;16','KONÉ Souleymane;M;9,5','BAMBA Fatoumata;F;13','N\'GUESSAN Kevin;M;15','DIALLO Mariam;F;11,5','OUATTARA Yacouba;M;10','AKA Christelle;F;17','KOFFI Jean-Marc;M;8,5','COULIBALY Awa;F;12,5','TOURÉ Adama;M;13,5','ASSI Prisca;F;14','SORO Lassina;M;11','KOUAMÉ Hervé;M;15,5','DOSSO Nafissatou;F;9','ZADI Éric;M;12,5','GBAGBO Estelle;F;10,5','BAH Mamadou;M;14,5','EHOUMAN Cyrille;M;7,5','LOBA Chantal;F;13,5','TAPÉ Rodrigue;M;16,5','DIOMANDÉ Salimata;F;11','ADOU Franck;M;10,5'];
-  addRows(names.map(l=>l.split(';').slice(0,2)));
-  if(!state.themes.length){addThemes(['Intelligence artificielle et société','Cybersécurité','Cloud computing','Big Data','Internet des objets','Blockchain','Éthique du numérique','Réseaux 5G']);}
-};
+$('#btnDemo').onclick=()=>addRows(CLASS.map(n=>[n]));
 $('#studentTable').addEventListener('input',e=>{
   const tr=e.target.closest('tr[data-id]');if(!tr)return;
   const s=state.students.find(x=>x.id===tr.dataset.id);if(!s)return;
@@ -610,7 +639,7 @@ function addThemes(list){
 }
 function renderThemes(){
   $('#themeCount').textContent=state.themes.length;
-  $('#themeList').innerHTML=state.themes.map((t,i)=>`<span class="chip">${esc(t)}<button class="x" type="button" data-i="${i}" aria-label="Retirer ${esc(t)}">×</button></span>`).join('')||'<small class="hint">Aucun thème pour le moment.</small>';
+  $('#themeList').innerHTML=state.themes.map((t,i)=>`<span class="chip">${esc(t)}<button class="x" type="button" data-i="${i}" aria-label="Retirer ${esc(t)}">×</button></span>`).join('')||'<small class="hint">Aucun thème ajouté pour le moment.</small>';
   renderFeasibility();
 }
 $('#btnAddThemes').onclick=()=>{const v=$('#themeInput').value;if(!v.trim()){toast("Écrivez au moins un thème.",'warn');return;}const n=addThemes(v.split(/\r?\n/));$('#themeInput').value='';toast(n?`${n} thème${n>1?'s':''} ajouté${n>1?'s':''}.`:'Ces thèmes existent déjà.',n?'':'warn');};
