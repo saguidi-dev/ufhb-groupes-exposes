@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UFHB · Groupes d'exposés</title>
+<meta name="description" content="Formez des groupes d'exposé équitables : import des élèves, thèmes, contraintes de mixité, export Excel ou Word.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js" defer></script>
+<style>
+:root{
+  --forest:#0b2b22; --forest-2:#134234; --orange:#f77f00;
+  --bg:#f1f5f2; --panel:#ffffff; --panel-2:#f6f9f7; --text:#10241c; --muted:#546a60;
+  --line:#d8e2dc; --line-2:#bccbc2; --field:#ffffff;
+  --rose:#c4245f; --rose-bg:#fde6ef; --blue:#2c5fae; --blue-bg:#e4edfa;
+  --ok:#14804a; --ok-bg:#e0f4e9; --bad:#b42318; --bad-bg:#fde8e5; --warn:#8a4b00; --warn-bg:#fff1d9;
+  --font-d:'Bricolage Grotesque',system-ui,sans-serif; --font:'Hanken Grotesk',system-ui,sans-serif;
+}
+[data-theme=dark]{
+  --bg:#08130f; --panel:#0e1e18; --panel-2:#12261f; --text:#e8f1ec; --muted:#8ea69a;
+  --line:#1d3329; --line-2:#2c493c; --field:#0a1913;
+  --rose:#ff86b3; --rose-bg:#3b1627; --blue:#92b9ff; --blue-bg:#14233d;
+  --ok:#5fd59a; --ok-bg:#0f2e20; --bad:#ff8f84; --bad-bg:#3b1713; --warn:#ffc46b; --warn-bg:#33240a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-d);margin:0;letter-spacing:-.02em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.wrap{width:min(1120px,100% - 40px);margin-inline:auto}
+
+/* Étapes */
+main{padding-bottom:40px}
+.step{display:grid;grid-template-columns:minmax(0,270px) minmax(0,1fr);gap:48px;padding:60px 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0}
+.aside .n{font:800 4.6rem/.9 var(--font-d);color:var(--orange);display:block;margin-bottom:12px}
+.aside h2{font-size:1.55rem;line-height:1.15;margin-bottom:10px}
+.aside p{color:var(--muted);margin:0;max-width:34ch}
+.aside{align-self:start;position:sticky;top:24px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.span2{grid-column:span 2}.span3{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:7px;margin:0}
+.field>span,.lbl{font-weight:700;font-size:.93rem}
+.field small,small.hint{color:var(--muted);font-size:.86rem}
+input[type=text],input[type=number],input[type=date],input:not([type]),select,textarea{
+  width:100%;background:var(--field);border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;min-height:44px}
+textarea{resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{border-color:var(--orange)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:44px;transition:background .15s,transform .15s}
+.btn:hover{background:var(--panel-2)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:#1c0e00;font-weight:700}
+.btn.primary:hover{background:#ff9120}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.drop{border:2px dashed var(--line-2);border-radius:14px;padding:20px;background:var(--panel-2);display:flex;flex-direction:column;gap:12px;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--orange);background:var(--warn-bg)}
+.drop p{margin:0;color:var(--muted);font-size:.93rem}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.92rem}
+.stat b{font-family:var(--font-d);font-size:1.05rem;margin-right:4px}
+.tbl-wrap{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table.tbl{width:100%;border-collapse:collapse;min-width:520px}
+.tbl th{position:sticky;top:0;background:var(--panel-2);text-align:left;font-size:.85rem;padding:9px 12px;border-bottom:1px solid var(--line);z-index:1}
+.tbl td{padding:4px 8px;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .idx{color:var(--muted);width:44px;text-align:right;padding-right:10px;font-variant-numeric:tabular-nums}
+.tbl .cell{border-color:transparent;background:transparent;min-height:38px;padding:7px 9px}
+.tbl .cell:hover{border-color:var(--line-2)}
+.tbl .cell:focus{background:var(--field)}
+.tbl td.empty{text-align:center;color:var(--muted);padding:28px}
+.x{background:none;border:0;color:var(--muted);font-size:1.3rem;cursor:pointer;width:36px;height:36px;border-radius:8px}
+.x:hover{background:var(--bad-bg);color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line-2);border-radius:999px;padding:5px 6px 5px 14px;font-size:.93rem}
+.chip .x{width:26px;height:26px;font-size:1.05rem}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{background:none;border:0;padding:10px 16px;cursor:pointer;font-weight:600;min-height:44px}
+.seg button[aria-pressed=true]{background:var(--forest);color:#fff}
+[data-theme=dark] .seg button[aria-pressed=true]{background:var(--orange);color:#1c0e00}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.choice{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:14px;cursor:pointer}
+.choice input{margin-top:4px;accent-color:var(--orange);width:18px;height:18px}
+.choice b{display:block}
+.choice small{color:var(--muted)}
+.choice:has(input:checked){border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange);background:var(--warn-bg)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.95rem}
+.check input{margin-top:4px;accent-color:var(--orange);width:18px;height:18px}
+.stack{display:grid;gap:26px}
+.notice{border-radius:12px;padding:14px 16px;font-size:.95rem;border:1px solid}
+.notice.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.notice.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.notice ul{margin:6px 0 0;padding-left:20px}
+.notice .warn{display:block;margin-top:6px;color:var(--warn)}
+[data-theme=light] .notice.ok .warn{color:var(--warn)}
+
+/* ---------- Résultats ---------- */
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:20px;margin-top:8px}
+.ticket{position:relative;display:grid;grid-template-columns:78px 1fr;background:var(--panel);border:1px solid var(--line-2);border-radius:14px;overflow:hidden}
+.ticket::before,.ticket::after{content:"";position:absolute;left:67px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--line-2)}
+.ticket::before{top:-12px}.ticket::after{bottom:-12px}
+.stub{background:var(--forest);color:#fff;display:flex;align-items:center;justify-content:center;font:800 2.6rem/1 var(--font-d);border-right:2px dashed rgba(255,255,255,.35)}
+.tbody{padding:14px 14px 12px;min-width:0}
+.tbody h3{font-size:.8rem;color:var(--muted);font-family:var(--font);font-weight:700;letter-spacing:0;margin-bottom:6px}
+.theme-sel{font-weight:700;font-size:.95rem;padding:8px 10px;min-height:40px}
+.dup{display:block;color:var(--warn);font-size:.82rem;margin-top:4px}
+.ticket.low{border-color:var(--bad)}
+.mems{list-style:none;margin:10px 0 8px;padding:0;display:grid;gap:2px}
+.mem{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;font-size:.95rem}
+.mem:hover{background:var(--panel-2)}
+.mem.picked{border-color:var(--orange);background:var(--warn-bg)}
+.mem .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem small{color:var(--muted);font-variant-numeric:tabular-nums}
+.b{font-style:normal;font-weight:700;font-size:.72rem;border-radius:6px;padding:1px 6px}
+.b.F{background:var(--rose-bg);color:var(--rose)}
+.b.M{background:var(--blue-bg);color:var(--blue)}
+.tfoot{display:flex;gap:12px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.tfoot .bad{color:var(--bad);font-weight:700}
+.dealing .ticket{animation:deal .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*70ms)}
+@keyframes deal{from{opacity:0;transform:translateY(-22px) rotate(-3deg)}to{opacity:1;transform:none}}
+.export{margin-top:40px;padding:24px;border-radius:16px;background:var(--forest);color:#eaf4ee}
+.export h3{font-size:1.25rem;margin-bottom:4px}
+.export p{margin:0 0 18px;color:#aac5b8}
+.export .seg{border-color:rgba(255,255,255,.3);background:transparent}
+.export .seg button{color:#eaf4ee}
+.export .seg button[aria-pressed=true]{background:var(--orange);color:#1c0e00}
+.export .check{color:#eaf4ee}
+.export .opts{display:flex;flex-wrap:wrap;gap:12px 26px;margin:18px 0}
+footer{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--muted);font-size:.9rem}
+footer .row{justify-content:space-between}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+#toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:grid;gap:8px;z-index:50;width:min(520px,calc(100% - 28px))}
+.toast{background:var(--forest);color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 14px 30px -12px rgba(0,0,0,.5);border-left:5px solid var(--leaf,#1e9e62)}
+.toast.err{border-left-color:#ff6b5e}.toast.warn{border-left-color:var(--orange)}
+
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr;padding-bottom:56px}
+  .hero-demo{display:none}
+  .step{grid-template-columns:1fr;gap:22px;padding:44px 0}
+  .aside{position:static}
+  .aside .n{font-size:3.2rem}
+  .grid,.g2,.split{grid-template-columns:1fr}
+  .span2{grid-column:auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ===== Thème futuriste bleu et noir ===== */
+:root,[data-theme=dark]{--forest:#071a3a;--forest-2:#0b2a5e;--orange:#2f8bff;--cy:#22d3ee;--bg:#02050d;--panel:#070f20;--panel-2:#0a1730;--text:#e6f0ff;--muted:#8aa3cc;--line:#13264a;--line-2:#1e3a6e;--field:#040a17;--rose:#ff86b3;--rose-bg:#3b1627;--blue:#7db4ff;--blue-bg:#10264d;--ok:#5fe0ff;--ok-bg:#06283a;--bad:#ff8f84;--bad-bg:#3b1713;--warn:#ffcf7a;--warn-bg:#0c2147;--font-d:'Sora',system-ui,sans-serif}
+body{background:linear-gradient(rgba(47,139,255,.035) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(47,139,255,.035) 1px,transparent 1px) 0 0/44px 44px,var(--bg);background-attachment:fixed}
+:focus-visible{outline-color:var(--cy)}
+.btn.primary{background:linear-gradient(135deg,#2f8bff,#22d3ee);border:0;color:#021028;box-shadow:0 0 26px -6px rgba(47,139,255,.7)}
+.btn.primary:hover{background:linear-gradient(135deg,#5aa5ff,#5fe3f5)}
+.aside .n{background:linear-gradient(180deg,#5aa5ff,#0b2a5e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.seg button[aria-pressed=true],[data-theme=dark] .seg button[aria-pressed=true],.export .seg button[aria-pressed=true]{background:var(--orange);color:#021028}
+.choice:has(input:checked){box-shadow:inset 0 0 0 1px var(--orange),0 0 26px -10px var(--orange)}
+.ticket{box-shadow:0 18px 40px -24px rgba(47,139,255,.55)}
+.stub{background:linear-gradient(160deg,#0b2a5e,#071a3a);color:var(--cy);text-shadow:0 0 18px rgba(34,211,238,.6)}
+.export{background:linear-gradient(135deg,#071a3a,#04122b);border:1px solid var(--line-2)}
+.export p{color:var(--muted)}
+.toast{background:#071a3a;border:1px solid var(--line-2)}
+.mem .x{width:24px;height:24px;font-size:1rem;flex:none}
+.pool-box{border:1px dashed var(--line-2);border-radius:14px;padding:16px;margin:18px 0 6px;background:var(--panel-2)}
+.pool-box h3{font-size:1rem;margin-bottom:6px}
+.pool-chip{padding-right:6px}
+.mv{width:auto;min-height:30px;padding:3px 8px;border-radius:8px;font-size:.85rem}
+/* intro au scroll */
+.intro{height:260vh;position:relative}
+.stage{position:sticky;top:0;height:100vh;overflow:hidden;display:grid;place-items:center;background:radial-gradient(900px 520px at 50% 62%,#0a2a66 0%,#04122b 46%,#02050d 100%)}
+#fx{position:absolute;inset:0;width:100%;height:100%}
+.logo{position:absolute;top:22px;left:max(20px,4vw);font:700 1rem var(--font-d);letter-spacing:.08em}
+.center{position:relative;text-align:center;padding:0 20px}
+.intro h1{font-weight:800;line-height:1;font-size:clamp(2.6rem,10vw,7.5rem);letter-spacing:-.03em;display:grid;justify-items:center}
+.ln{display:block;min-height:1em}
+.ln1{background:linear-gradient(180deg,#fff,#7db4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ln2{font-size:.46em;letter-spacing:.06em}
+.ln3{font-size:.7em;color:var(--cy);text-shadow:0 0 30px rgba(34,211,238,.55)}
+.caret{display:inline-block;width:.06em;height:.8em;background:var(--cy);margin-left:.05em;vertical-align:-.05em;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.sub,.go{opacity:0;transition:opacity .6s}
+.sub{color:var(--muted);max-width:46ch;margin:22px auto 26px}
+.go{display:inline-flex;align-items:center;text-decoration:none;font-size:1.05rem;padding:14px 28px;pointer-events:none}
+.sub.on,.go.on{opacity:1}.go.on{pointer-events:auto}
+.tag{position:absolute;padding:6px 14px;border:1px solid var(--line-2);border-radius:999px;font-size:.85rem;color:var(--cy);background:rgba(4,18,43,.75);opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s}
+.tag.on{opacity:1;transform:none}
+.hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.9rem;transition:opacity .4s}
+</style>
+</head>
+<body>
+
+<header class="intro" id="intro">
+  <div class="stage">
+    <canvas id="fx" aria-hidden="true"></canvas>
+    <span class="logo">UFHB</span>
+    <span class="tag" data-at=".18" style="top:16%;left:8%">Python</span>
+    <span class="tag" data-at=".3" style="top:24%;right:8%">Machine learning</span>
+    <span class="tag" data-at=".42" style="bottom:24%;left:9%">Big Data</span>
+    <span class="tag" data-at=".54" style="bottom:15%;right:11%">Statistiques</span>
+    <span class="tag" data-at=".66" style="top:11%;left:42%">Réseaux de neurones</span>
+    <div class="center">
+      <h1 aria-label="UFHB Data Science et IA"><span class="ln ln1"></span><span class="ln ln2"></span><span class="ln ln3"></span></h1>
+      <p class="sub" id="sub">Formez vos groupes d'exposé et attribuez les thèmes, au hasard ou à la main.</p>
+      <a class="btn primary go" id="go" href="#s1">Commencer</a>
+    </div>
+    <span class="hint" id="hint">Faites défiler</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 1 -->
+  <section class="step" id="s1">
+    <div class="aside"><span class="n">1</span><h2>Informations du cours</h2><p>Elles apparaissent en tête du document exporté. Tout est facultatif.</p></div>
+    <div class="grid">
+      <label class="field span3"><span>Titre du document</span><input type="text" data-k="title" placeholder="Répartition des groupes d'exposés"></label>
+      <label class="field span2"><span>Établissement</span><input type="text" data-k="school"></label>
+      <label class="field"><span>Année académique</span><input type="text" data-k="year"></label>
+      <label class="field"><span>UFR ou filière</span><input type="text" data-k="filiere" placeholder="Ex. Mathématiques et informatique"></label>
+      <label class="field"><span>Niveau</span><input type="text" data-k="niveau" list="niveaux" placeholder="Ex. Master 1"></label>
+      <label class="field"><span>Matière</span><input type="text" data-k="matiere" placeholder="Ex. Bases de données"></label>
+      <label class="field span2"><span>Enseignant</span><input type="text" data-k="prof"></label>
+      <label class="field"><span>Date de passage</span><input type="date" data-k="date"></label>
+      <datalist id="niveaux"><option value="Licence 1"><option value="Licence 2"><option value="Licence 3"><option value="Master 1"><option value="Master 2"><option value="Doctorat"></datalist>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="step" id="s2">
+    <div class="aside"><span class="n">2</span><h2>Liste des élèves</h2><p>Importez un fichier ou collez la liste. Le sexe sert à la contrainte de filles par groupe.</p></div>
+    <div>
+      <div class="split">
+        <div class="drop" id="drop">
+          <strong>Importer un fichier</strong>
+          <p>Excel (.xlsx) ou CSV avec les colonnes Nom et Sexe (F ou M). Le sexe est facultatif. Vous pouvez aussi glisser le fichier ici.</p>
+          <div class="row">
+            <button class="btn" type="button" id="btnFile">Choisir un fichier</button>
+            <button class="btn ghost" type="button" id="btnTemplate">Télécharger le modèle</button>
+            <button class="btn ghost" type="button" id="btnDemo">Charger un exemple</button>
+          </div>
+          <input type="file" id="file" accept=".xlsx,.csv,.txt" hidden>
+        </div>
+        <div class="stack" style="gap:12px">
+          <label class="field"><span>Ou collez la liste, un élève par ligne</span>
+            <textarea id="paste" rows="5" placeholder="KOUASSI Aya ; F&#10;TRAORÉ Ibrahim ; M"></textarea>
+            <small>Séparez les colonnes par un point-virgule, une virgule ou une tabulation.</small></label>
+          <div class="row"><button class="btn" type="button" id="btnPaste">Ajouter à la liste</button></div>
+        </div>
+      </div>
+      <div class="stats" id="studentStats"></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="studentTable">
+          <thead><tr><th class="idx">N°</th><th>Nom et prénoms</th><th style="width:140px">Sexe</th><th style="width:50px"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn ghost danger" type="button" id="btnClearStudents">Vider la liste</button></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" id="s3">
+    <div class="aside"><span class="n">3</span><h2>Thèmes d'exposé</h2><p>Ajoutez autant de thèmes que vous voulez. S'il y en a plus que de groupes, seuls certains seront utilisés.</p></div>
+    <div class="split">
+      <div class="stack" style="gap:12px">
+        <label class="field"><span>Un thème par ligne</span>
+          <textarea id="themeInput" rows="6" placeholder="Intelligence artificielle et société&#10;Cybersécurité&#10;Cloud computing"></textarea></label>
+        <div class="row"><button class="btn" type="button" id="btnAddThemes">Ajouter les thèmes</button><button class="btn ghost danger" type="button" id="btnClearThemes">Vider la liste</button></div>
+      </div>
+      <div>
+        <span class="lbl">Thèmes disponibles : <b id="themeCount">0</b></span>
+        <div class="chips" id="themeList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="step" id="s4">
+    <div class="aside"><span class="n">4</span><h2>Règles de répartition</h2><p>Choisissez le nombre de groupes, la façon de répartir les élèves et d'attribuer les thèmes.</p></div>
+    <div class="stack">
+      <div class="grid g2">
+        <div class="field">
+          <span>Définir les groupes par</span>
+          <div class="seg" id="sizeSeg" role="group" aria-label="Mode de définition des groupes">
+            <button type="button" data-v="count" aria-pressed="true">Nombre de groupes</button>
+            <button type="button" data-v="size" aria-pressed="false">Élèves par groupe</button>
+          </div>
+          <input type="number" id="groupNum" min="1" aria-label="Valeur">
+          <small id="groupHint"></small>
+        </div>
+        <label class="field"><span>Filles minimum par groupe</span>
+          <input type="number" id="minGirls" min="0">
+          <small>Mettez 0 pour désactiver cette règle.</small></label>
+      </div>
+
+      <div class="field"><span>Répartition des élèves</span>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="dist" value="random"><div><b>Aléatoire</b><small>Tirage au sort en respectant les règles.</small></div></label>
+          <label class="choice"><input type="radio" name="dist" value="manual"><div><b>Choix manuel</b><small>Vous placez chaque élève vous-même, ou complétez le reste au hasard.</small></div></label>
+        </div>
+      </div>
+
+      <div class="field"><span>Attribution des thèmes</span>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="themeMode" value="random"><div><b>Au hasard</b><small>Chaque groupe reçoit un thème tiré au sort.</small></div></label>
+          <label class="choice"><input type="radio" name="themeMode" value="order"><div><b>Dans l'ordre de la liste</b><small>Groupe 1 reçoit le premier thème, et ainsi de suite.</small></div></label>
+          <label class="choice"><input type="radio" name="themeMode" value="manual"><div><b>Choix manuel</b><small>Vous choisissez le thème de chaque groupe après la génération.</small></div></label>
+        </div>
+        <label class="check" style="margin-top:6px"><input type="checkbox" id="allowRepeat"><span>Autoriser un même thème pour plusieurs groupes quand il y a moins de thèmes que de groupes.</span></label>
+      </div>
+
+      <div id="feasibility" class="notice ok" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="step" id="s5">
+    <div class="aside"><span class="n">5</span><h2>Résultat et export</h2><p>Générez les groupes, ajustez-les si besoin, puis téléchargez le document.</p></div>
+    <div>
+      <div class="row">
+        <button class="btn primary" type="button" id="btnGen" style="font-size:1.05rem;padding:13px 24px">Générer les groupes</button>
+        <button class="btn" type="button" id="btnRegen" hidden>Refaire le tirage</button>
+      </div>
+      <div id="results" hidden>
+        <div class="stats" id="resultStats"></div>
+        <small class="hint">Cliquez sur deux élèves pour les échanger de groupe. Le thème de chaque groupe reste modifiable.</small>
+        <div class="pool-box" id="poolBox" hidden><h3>Élèves à placer : <b id="poolCount">0</b></h3><div class="chips" id="pool"></div><div class="row" style="margin-top:12px"><button class="btn" type="button" id="btnFillRest">Répartir le reste au hasard</button></div></div>
+        <div class="groups" id="groups"></div>
+
+        <div class="export">
+          <h3>Télécharger le document</h3>
+          <p>Le fichier contient les informations du cours, chaque groupe avec son thème et ses membres, et un récapitulatif.</p>
+          <div class="seg" id="fmtSeg" role="group" aria-label="Format du fichier">
+            <button type="button" data-v="xlsx" aria-pressed="true">Excel</button>
+            <button type="button" data-v="docx" aria-pressed="false">Word</button>
+          </div>
+          <div class="opts">
+            <input type="checkbox" id="optAvg" hidden>
+            <label class="check"><input type="checkbox" id="optList"><span>Ajouter la liste alphabétique des élèves</span></label>
+          </div>
+          <button class="btn primary" type="button" id="btnExport">Télécharger en Excel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>Les listes restent dans votre navigateur et ne sont envoyées nulle part.</span>
+    <button class="link" type="button" id="btnReset">Tout réinitialiser</button>
+  </div>
+</footer>
+<div id="toasts" role="status" aria-live="polite"></div>
+<script>
+(()=>{
+const intro=document.getElementById('intro'),cv=document.getElementById('fx'),ctx=cv.getContext('2d');
+const L=['UFHB','DATA SCIENCE','et IA'],total=L.join('').length,lines=[...intro.querySelectorAll('.ln')];
+const tags=[...intro.querySelectorAll('.tag')],sub=document.getElementById('sub'),go=document.getElementById('go'),hint=document.getElementById('hint');
+const caret=document.createElement('i');caret.className='caret';
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const layers=[4,6,6,3],S='01∑λπ∇σ≈∫θ';
+let W,H,p=reduce?1:0,tp=p,nodes=[],cols=[],shown=-1,live=true;
+function build(){
+  nodes=[];layers.forEach((n,l)=>{for(let i=0;i<n;i++)nodes.push({l,i,x:W*(.12+.76*l/(layers.length-1)),y:H*(.22+.56*(i+.5)/n)});});
+  cols=Array.from({length:Math.ceil(W/30)},(_,i)=>({x:i*30+6,y:Math.random()*H,v:.6+Math.random()*1.2,s:Array.from({length:12},()=>S[Math.floor(Math.random()*S.length)])}));
+}
+function resize(){const d=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);build();}
+const cl=(v)=>Math.max(0,Math.min(1,v));
+function text(){
+  const c=Math.round(cl(p/.7)*total);if(c===shown)return;shown=c;
+  const a=L[0].slice(0,c),b=L[1].slice(0,Math.max(0,c-4)),d=L[2].slice(0,Math.max(0,c-16));
+  lines[0].textContent=a;lines[1].textContent=b;lines[2].textContent=d;
+  lines[c>16?2:c>4?1:0].appendChild(caret);
+}
+function draw(ts){
+  ctx.clearRect(0,0,W,H);const t=ts/1000;
+  ctx.font='14px monospace';
+  cols.forEach(c=>{if(!reduce){c.y+=c.v;if(c.y>H+220)c.y=-Math.random()*H;}for(let k=0;k<9;k++){ctx.fillStyle=`rgba(47,139,255,${.2-k*.02})`;ctx.fillText(c.s[(k+Math.floor(c.y/18))%c.s.length],c.x,c.y-k*18);}});
+  const rv=cl(p*1.4)*layers.length;
+  nodes.forEach(a=>{if(a.l===layers.length-1)return;const v=cl(rv-a.l);if(v<=0)return;
+    nodes.filter(b=>b.l===a.l+1).forEach(b=>{
+      ctx.strokeStyle=`rgba(47,139,255,${.22*v})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      if(v>.9&&!reduce){const k=(t*.35+((a.i*7+b.i*3)%10)/10)%1;ctx.fillStyle='rgba(34,211,238,.85)';ctx.beginPath();ctx.arc(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,2,0,6.3);ctx.fill();}
+    });});
+  nodes.forEach(n=>{const v=cl(rv-n.l+.3);if(v<=0)return;ctx.shadowColor='#22d3ee';ctx.shadowBlur=14*v;ctx.fillStyle=`rgba(34,211,238,${.9*v})`;ctx.beginPath();ctx.arc(n.x,n.y,3.5+(reduce?0:Math.sin(t*2+n.i)*.8),0,6.3);ctx.fill();});
+  ctx.shadowBlur=0;
+}
+function scroll(){const m=intro.offsetHeight-innerHeight;tp=cl(-intro.getBoundingClientRect().top/m);}
+function ui(){
+  text();
+  tags.forEach(x=>x.classList.toggle('on',p>=+x.dataset.at));
+  sub.classList.toggle('on',p>.75);go.classList.toggle('on',p>.85);hint.style.opacity=p>.04?0:1;
+}
+function loop(ts){p+=(tp-p)*.12;ui();if(live)draw(ts);requestAnimationFrame(loop);}
+new IntersectionObserver(e=>{live=e[0].isIntersecting;}).observe(intro);
+addEventListener('resize',resize);addEventListener('scroll',scroll,{passive:true});
+resize();scroll();if(reduce){p=1;ui();draw(0);}else requestAnimationFrame(loop);
+})();
+</script>
+
+
+<!-- =============== LOGIQUE (testée avec Node) =============== -->
+<script id="logic">
+function hasAvg(){return false;}
+function shuffle(a,rnd){rnd=rnd||Math.random;const r=a.slice();for(let i=r.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+function academicYear(d){d=d||new Date();const y=d.getFullYear();return d.getMonth()>=8?y+'-'+(y+1):(y-1)+'-'+y;}
+function groupStats(students){
+  const size=students.length,girls=students.filter(s=>s.sex==='F').length,boys=students.filter(s=>s.sex==='M').length;
+  const k=students.filter(hasAvg);
+  return {size,girls,boys,avg:k.length?k.reduce((a,s)=>a+s.avg,0)/k.length:null};
+}
+function computeGroupCount(n,set){
+  if(set.sizeMode==='size')return Math.max(1,Math.ceil(n/Math.max(1,set.perGroup|0)));
+  return Math.max(1,set.count|0);
+}
+function checkFeasibility(students,G,minGirls){
+  const n=students.length,F=students.filter(s=>s.sex==='F').length,issues=[];
+  if(n===0)issues.push('Ajoutez au moins un élève.');
+  else if(G>n)issues.push('Il y a plus de groupes ('+G+') que d\'élèves ('+n+').');
+  else if(minGirls>0){
+    if(F<minGirls*G)issues.push('Il faut au moins '+(minGirls*G)+' filles pour '+G+' groupes ('+minGirls+' par groupe) : la liste en compte '+F+'.');
+    if(Math.floor(n/G)<minGirls)issues.push('Certains groupes auront seulement '+Math.floor(n/G)+' élève(s) : impossible d\'y placer '+minGirls+' fille(s).');
+  }
+  return {ok:issues.length===0,issues,n,F};
+}
+function buildGroups(students,G,opts){
+  const rnd=opts.rnd||Math.random,mode=opts.mode||'random';
+  const n=students.length,base=Math.floor(n/G),extra=n%G;
+  let caps=Array.from({length:G},(_,i)=>base+(i<extra?1:0));
+  if(mode==='random')caps=shuffle(caps,rnd);
+  const known=students.filter(hasAvg);
+  const mean=known.length?known.reduce((a,s)=>a+s.avg,0)/known.length:0;
+  const val=s=>hasAvg(s)?s.avg:mean;
+  const groups=Array.from({length:G},()=>({students:[],girls:0,sum:0}));
+  const order=arr=>mode==='balanced'?shuffle(arr,rnd).sort((a,b)=>val(b)-val(a)):shuffle(arr,rnd);
+  const open=()=>groups.map((_,i)=>i).filter(i=>groups[i].students.length<caps[i]);
+  const choose=c=>{
+    if(mode==='balanced'){let best=c[0];for(const i of c){if(groups[i].sum/caps[i]<groups[best].sum/caps[best])best=i;}return best;}
+    return c[Math.floor(rnd()*c.length)];
+  };
+  const place=(s,i)=>{const g=groups[i];g.students.push(s);g.sum+=val(s);if(s.sex==='F')g.girls++;};
+  for(const s of order(students.filter(s=>s.sex==='F'))){
+    let c=open();const m=Math.min.apply(null,c.map(i=>groups[i].girls));
+    c=c.filter(i=>groups[i].girls===m);place(s,choose(c));
+  }
+  for(const s of order(students.filter(s=>s.sex!=='F')))place(s,choose(open()));
+  const col=new Intl.Collator('fr',{sensitivity:'base'});
+  return groups.map(g=>({students:g.students.sort((a,b)=>col.compare(a.name,b.name))}));
+}
+function assignThemes(themes,G,mode,allowRepeat,rnd){
+  if(mode==='manual'||!themes.length)return Array(G).fill('');
+  const pool=mode==='random'?shuffle(themes,rnd):themes.slice();
+  const out=[];
+  for(let i=0;i<G;i++)out.push(i<pool.length?pool[i]:(allowRepeat?pool[i%pool.length]:''));
+  return out;
+}
+const RE_F=/^(f|fille|femme|féminin|feminin|female)$/i;
+const RE_M=/^(m|g|h|garçon|garcon|homme|masculin|male)$/i;
+function parseCells(cells){
+  const c=Array.from(cells,x=>String(x==null?'':x).trim()).filter(x=>x!=='');
+  if(!c.length)return null;
+  if(c.length>1&&/^\d+[.)]?$/.test(c[0]))c.shift();
+  let sex='',avg=null;
+  for(const x of c.slice(1)){
+    if(RE_F.test(x))sex='F';
+    else if(RE_M.test(x))sex='M';
+    else if(/^\d+([.,]\d+)?$/.test(x)){const v=parseFloat(x.replace(',','.'));if(!isNaN(v))avg=v;}
+  }
+  return {name:c[0],sex,avg};
+}
+function isHeader(p){return /^(n°|nom|noms|name|nom et pr[ée]noms?|[ée]l[èe]ves?|[ée]tudiants?)$/i.test(p.name)&&!p.sex&&p.avg===null;}
+function splitLine(l){
+  if(l.indexOf('\t')>=0)return l.split('\t');
+  if(l.indexOf(';')>=0)return l.split(';');
+  if(l.indexOf(',')>=0)return l.split(',');
+  return [l];
+}
+function parseText(t){return String(t).split(/\r?\n/).filter(l=>l.trim()).map(splitLine);}
+</script>
+
+<!-- =============== INTERFACE =============== -->
+<script>
+(()=>{
+'use strict';
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n.toFixed(2).replace('.',',');
+const uid=()=>Math.random().toString(36).slice(2,10);
+const LS='exposes-groupes-v1';
+
+const state={
+  info:{title:"Répartition des groupes d'exposés",school:'Université Félix Houphouët-Boigny (UFHB)',year:academicYear(),filiere:'',niveau:'',matiere:'',prof:'',date:''},
+  students:[],themes:[],
+  set:{sizeMode:'count',count:5,perGroup:5,dist:'random',themeMode:'random',minGirls:1,allowRepeat:false},
+  fmt:'xlsx',opt:{avg:true,list:true},result:null,sel:null
+};
+
+/* ---------- stockage local ---------- */
+try{
+  const j=JSON.parse(localStorage.getItem(LS)||'null');
+  if(j){Object.assign(state.info,j.info||{});state.students=j.students||[];state.themes=j.themes||[];Object.assign(state.set,j.set||{});state.fmt=j.fmt||'xlsx';Object.assign(state.opt,j.opt||{});}
+}catch(e){}
+if(state.set.dist!=='manual')state.set.dist='random';
+let saveT;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({info:state.info,students:state.students,themes:state.themes,set:state.set,fmt:state.fmt,opt:state.opt}));}catch(e){}},250);}
+
+/* ---------- toasts ---------- */
+function toast(msg,kind){
+  const el=document.createElement('div');el.className='toast '+(kind||'');el.textContent=msg;
+  $('#toasts').appendChild(el);setTimeout(()=>el.remove(),kind==='err'?6500:4200);
+}
+
+/* ---------- apparence ---------- */
+document.documentElement.dataset.theme='dark';
+
+/* ---------- 1. informations ---------- */
+$$('[data-k]').forEach(el=>{
+  el.value=state.info[el.dataset.k]||'';
+  el.addEventListener('input',()=>{state.info[el.dataset.k]=el.value;save();});
+});
+
+/* ---------- 2. élèves ---------- */
+function renderStudentStats(){
+  const s=state.students,st=groupStats(s),unk=st.size-st.girls-st.boys;
+  const parts=[['Élèves',st.size],['Filles',st.girls],['Garçons',st.boys]];
+  if(unk)parts.push(['Sexe non précisé',unk]);
+  let h=parts.map(p=>`<span class="stat"><b>${p[1]}</b>${p[0]}</span>`).join('');
+  if(st.avg!==null)h+=`<span class="stat"><b>${fmt(st.avg)}</b>Moyenne de la liste</span>`;
+  $('#studentStats').innerHTML=h;
+}
+function renderStudents(){
+  const tb=$('#studentTable tbody');
+  tb.innerHTML=state.students.map((s,i)=>`<tr data-id="${s.id}">
+    <td class="idx">${i+1}</td>
+    <td><input class="cell" data-f="name" value="${esc(s.name)}" aria-label="Nom"></td>
+    <td><select class="cell" data-f="sex" aria-label="Sexe"><option value="">Non précisé</option><option value="F"${s.sex==='F'?' selected':''}>Fille</option><option value="M"${s.sex==='M'?' selected':''}>Garçon</option></select></td>
+    <td><button class="x" type="button" data-del aria-label="Retirer cet élève">×</button></td></tr>`).join('')
+    ||'<tr><td colspan="4" class="empty">Aucun élève pour le moment. Importez un fichier ou collez une liste.</td></tr>';
+  renderStudentStats();renderFeasibility();
+}
+function addRows(rows){
+  const seen=new Set(state.students.map(s=>s.name.toLowerCase()));
+  let added=0,dup=0;
+  rows.forEach((cells,idx)=>{
+    const p=parseCells(cells);if(!p)return;
+    if(idx===0&&isHeader(p))return;
+    if(seen.has(p.name.toLowerCase())){dup++;return;}
+    seen.add(p.name.toLowerCase());state.students.push({id:uid(),name:p.name,sex:p.sex,avg:p.avg});added++;
+  });
+  renderStudents();save();
+  toast(added?`${added} élève${added>1?'s':''} ajouté${added>1?'s':''}${dup?` (${dup} doublon${dup>1?'s':''} ignoré${dup>1?'s':''})`:''}.`:(dup?'Ces élèves sont déjà dans la liste.':'Aucun élève reconnu. Vérifiez le format.'),added?'':'warn');
+}
+async function readFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  try{
+    if(ext==='xlsx'){
+      if(!window.ExcelJS){toast("La bibliothèque Excel n'est pas chargée (connexion ?). Utilisez un CSV ou collez la liste.",'err');return;}
+      const wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer());
+      const ws=wb.worksheets[0],rows=[];
+      ws.eachRow({includeEmpty:false},row=>{const c=[];row.eachCell({includeEmpty:true},(cell,i)=>{c[i-1]=cell.text;});rows.push(Array.from(c,x=>x==null?'':x));});
+      addRows(rows);
+    }else if(ext==='csv'||ext==='txt'){addRows(parseText(await file.text()));}
+    else toast('Format non pris en charge. Utilisez un fichier .xlsx ou .csv.','err');
+  }catch(e){toast("Impossible de lire ce fichier. Essayez de l'enregistrer en CSV.",'err');}
+}
+$('#btnFile').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{if(e.target.files[0])readFile(e.target.files[0]);e.target.value='';};
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
+$('#btnPaste').onclick=()=>{const v=$('#paste').value;if(!v.trim()){toast("Collez d'abord une liste.",'warn');return;}addRows(parseText(v));$('#paste').value='';};
+$('#btnClearStudents').onclick=()=>{if(state.students.length&&confirm('Vider toute la liste des élèves ?')){state.students=[];renderStudents();save();}};
+$('#btnTemplate').onclick=()=>{
+  const csv='\ufeffNom;Sexe\r\nKOUASSI Aya;F\r\nTRAORÉ Ibrahim;M\r\nYAO Marie-Ange;F\r\n';
+  download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'modele-liste-eleves.csv');
+};
+$('#btnDemo').onclick=()=>{
+  const names=['KOUASSI Aya;F;14,5','TRAORÉ Ibrahim;M;12','YAO Marie-Ange;F;16','KONÉ Souleymane;M;9,5','BAMBA Fatoumata;F;13','N\'GUESSAN Kevin;M;15','DIALLO Mariam;F;11,5','OUATTARA Yacouba;M;10','AKA Christelle;F;17','KOFFI Jean-Marc;M;8,5','COULIBALY Awa;F;12,5','TOURÉ Adama;M;13,5','ASSI Prisca;F;14','SORO Lassina;M;11','KOUAMÉ Hervé;M;15,5','DOSSO Nafissatou;F;9','ZADI Éric;M;12,5','GBAGBO Estelle;F;10,5','BAH Mamadou;M;14,5','EHOUMAN Cyrille;M;7,5','LOBA Chantal;F;13,5','TAPÉ Rodrigue;M;16,5','DIOMANDÉ Salimata;F;11','ADOU Franck;M;10,5'];
+  addRows(names.map(l=>l.split(';').slice(0,2)));
+  if(!state.themes.length){addThemes(['Intelligence artificielle et société','Cybersécurité','Cloud computing','Big Data','Internet des objets','Blockchain','Éthique du numérique','Réseaux 5G']);}
+};
+$('#studentTable').addEventListener('input',e=>{
+  const tr=e.target.closest('tr[data-id]');if(!tr)return;
+  const s=state.students.find(x=>x.id===tr.dataset.id);if(!s)return;
+  const f=e.target.dataset.f;
+  if(f==='name')s.name=e.target.value;
+  if(f==='sex')s.sex=e.target.value;
+  if(f==='avg'){const v=parseFloat(e.target.value);s.avg=isNaN(v)?null:v;}
+  renderStudentStats();renderFeasibility();save();
+});
+$('#studentTable').addEventListener('click',e=>{
+  if(!e.target.closest('[data-del]'))return;
+  const tr=e.target.closest('tr[data-id]');
+  state.students=state.students.filter(x=>x.id!==tr.dataset.id);renderStudents();save();
+});
+
+/* ---------- 3. thèmes ---------- */
+function addThemes(list){
+  const seen=new Set(state.themes.map(t=>t.toLowerCase()));let n=0;
+  list.forEach(t=>{t=t.replace(/^\s*(\d+[.)]|[-•*])\s*/,'').trim();if(t&&!seen.has(t.toLowerCase())){seen.add(t.toLowerCase());state.themes.push(t);n++;}});
+  renderThemes();save();return n;
+}
+function renderThemes(){
+  $('#themeCount').textContent=state.themes.length;
+  $('#themeList').innerHTML=state.themes.map((t,i)=>`<span class="chip">${esc(t)}<button class="x" type="button" data-i="${i}" aria-label="Retirer ${esc(t)}">×</button></span>`).join('')||'<small class="hint">Aucun thème pour le moment.</small>';
+  renderFeasibility();
+}
+$('#btnAddThemes').onclick=()=>{const v=$('#themeInput').value;if(!v.trim()){toast("Écrivez au moins un thème.",'warn');return;}const n=addThemes(v.split(/\r?\n/));$('#themeInput').value='';toast(n?`${n} thème${n>1?'s':''} ajouté${n>1?'s':''}.`:'Ces thèmes existent déjà.',n?'':'warn');};
+$('#themeList').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;state.themes.splice(+b.dataset.i,1);renderThemes();save();});
+$('#btnClearThemes').onclick=()=>{if(state.themes.length&&confirm('Vider la liste des thèmes ?')){state.themes=[];renderThemes();save();}};
+
+/* ---------- 4. règles ---------- */
+function renderSettings(){
+  const s=state.set;
+  $$('#sizeSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===s.sizeMode)));
+  $('#groupNum').value=s.sizeMode==='count'?s.count:s.perGroup;
+  $('#minGirls').value=s.minGirls;
+  $$('input[name=dist]').forEach(r=>r.checked=r.value===s.dist);
+  $$('input[name=themeMode]').forEach(r=>r.checked=r.value===s.themeMode);
+  $('#allowRepeat').checked=s.allowRepeat;
+}
+$('#sizeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.set.sizeMode=b.dataset.v;renderSettings();renderFeasibility();save();});
+$('#groupNum').addEventListener('input',e=>{const v=Math.max(1,parseInt(e.target.value)||1);if(state.set.sizeMode==='count')state.set.count=v;else state.set.perGroup=v;renderFeasibility();save();});
+$('#minGirls').addEventListener('input',e=>{state.set.minGirls=Math.max(0,parseInt(e.target.value)||0);renderFeasibility();save();});
+$$('input[name=dist]').forEach(r=>r.addEventListener('change',()=>{state.set.dist=r.value;renderFeasibility();save();}));
+$$('input[name=themeMode]').forEach(r=>r.addEventListener('change',()=>{state.set.themeMode=r.value;renderFeasibility();save();}));
+$('#allowRepeat').addEventListener('change',e=>{state.set.allowRepeat=e.target.checked;renderFeasibility();save();});
+
+function renderFeasibility(){
+  const box=$('#feasibility'),n=state.students.length,set=state.set;
+  const G=computeGroupCount(n,set),f=checkFeasibility(state.students,G,set.dist==='manual'?0:set.minGirls);
+  const hint=$('#groupHint');
+  hint.textContent=n&&G<=n?(n%G===0?`${G} groupes de ${n/G} élèves.`:`${G} groupes de ${Math.floor(n/G)} ou ${Math.floor(n/G)+1} élèves.`):'';
+  if(!f.ok){box.className='notice bad';box.innerHTML='<b>À corriger avant de générer</b><ul>'+f.issues.map(i=>`<li>${esc(i)}</li>`).join('')+'</ul>';return;}
+  const warns=[],st=groupStats(state.students),unk=st.size-st.girls-st.boys;
+  if(set.minGirls>0&&unk)warns.push(`${unk} élève(s) sans sexe précisé ne comptent pas comme filles.`);
+  if(set.dist==='balanced'&&!state.students.some(hasAvg))warns.push('Aucune moyenne dans la liste : la répartition sera aléatoire.');
+  if(set.themeMode!=='manual'&&state.themes.length&&state.themes.length<G&&!set.allowRepeat)warns.push(`Il y a ${state.themes.length} thème(s) pour ${G} groupes : ${G-state.themes.length} groupe(s) n'auront pas de thème.`);
+  if(set.themeMode!=='manual'&&!state.themes.length)warns.push("Aucun thème ajouté : vous pourrez les saisir plus tard.");
+  const girlsTxt=set.minGirls>0?`, au moins ${set.minGirls} fille${set.minGirls>1?'s':''} par groupe`:'';
+  box.className='notice ok';
+  box.innerHTML=`<b>Prêt à générer</b> : ${G} groupe${G>1?'s':''}${girlsTxt}.`+warns.map(w=>`<span class="warn">${esc(w)}</span>`).join('');
+}
+
+/* ---------- 5. génération ---------- */
+function generate(){
+  const n=state.students.length,set=state.set,G=computeGroupCount(n,set);
+  const f=checkFeasibility(state.students,G,set.dist==='manual'?0:set.minGirls);
+  if(!f.ok){toast(f.issues[0],'err');$('#feasibility').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  const mode=set.dist==='manual'?'manual':'random';
+  const groups=mode==='manual'?Array.from({length:G},()=>({students:[]})):buildGroups(state.students,G,{mode});
+  const themes=assignThemes(state.themes,G,set.themeMode,set.allowRepeat);
+  state.result={groups:groups.map((g,i)=>({students:g.students,theme:themes[i]})),mode,pool:mode==='manual'?state.students.slice():[]};
+  state.sel=null;
+  renderResults(true);
+  $('#btnRegen').hidden=false;$('#btnGen').textContent='Générer à nouveau';
+  $('#results').hidden=false;
+  $('#resultStats').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderResults(deal){
+  const r=state.result;if(!r)return;
+  const stats=r.groups.map(g=>groupStats(g.students)),all=groupStats(state.students);
+  const avgs=stats.map(s=>s.avg).filter(a=>a!==null);
+  let h=`<span class="stat"><b>${r.groups.length}</b>groupes</span><span class="stat"><b>${all.size}</b>élèves</span><span class="stat"><b>${all.girls}</b>filles</span>`;
+  if(avgs.length>1)h+=`<span class="stat"><b>${fmt(Math.max(...avgs)-Math.min(...avgs))}</b>d'écart entre les moyennes des groupes</span>`;
+  $('#resultStats').innerHTML=h;
+  const counts={};r.groups.forEach(g=>{if(g.theme)counts[g.theme]=(counts[g.theme]||0)+1;});
+  const withAvg=state.students.some(hasAvg);
+  const box=$('#groups');box.classList.toggle('dealing',!!deal);
+  box.innerHTML=r.groups.map((g,gi)=>{
+    const st=stats[gi],low=r.mode!=='manual'&&state.set.minGirls>0&&st.girls<state.set.minGirls;
+    const opts=['<option value="">Choisir un thème</option>'].concat((state.themes.includes(g.theme)||!g.theme?state.themes:state.themes.concat([g.theme])).map(t=>`<option value="${esc(t)}"${t===g.theme?' selected':''}>${esc(t)}</option>`)).join('');
+    const dup=g.theme&&counts[g.theme]>1&&!state.set.allowRepeat?'<span class="dup">Ce thème est déjà pris par un autre groupe.</span>':'';
+    const mems=g.students.map((s,si)=>{
+      const picked=state.sel&&state.sel.g===gi&&state.sel.s===si;
+      return `<li class="mem${picked?' picked':''}" data-g="${gi}" data-s="${si}" title="Cliquer pour échanger"><span class="nm">${esc(s.name)}</span>${s.sex==='F'?'<em class="b F">F</em>':s.sex==='M'?'<em class="b M">G</em>':''}${r.mode==='manual'?'<button class="x" type="button" data-rm aria-label="Retirer du groupe">×</button>':''}</li>`;
+    }).join('');
+    return `<article class="ticket${low?' low':''}" style="--i:${gi}"><div class="stub">${gi+1}</div><div class="tbody"><h3>Groupe ${gi+1}</h3><select class="theme-sel" data-g="${gi}" aria-label="Thème du groupe ${gi+1}">${opts}</select>${dup}<ul class="mems">${mems}</ul><div class="tfoot"><span>${st.size} membres</span><span class="${low?'bad':''}">${st.girls} fille${st.girls>1?'s':''}</span>${st.avg!==null?`<span>Moyenne ${fmt(st.avg)}</span>`:''}</div></div></article>`;
+  }).join('');
+  renderPool();
+  $('#optAvg').disabled=!withAvg;
+  if(!withAvg)$('#optAvg').checked=false;else $('#optAvg').checked=state.opt.avg;
+  $('#optList').checked=state.opt.list;
+  $$('#fmtSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===state.fmt)));
+  $('#btnExport').textContent='Télécharger en '+(state.fmt==='xlsx'?'Excel':'Word');
+}
+$('#groups').addEventListener('click',e=>{
+  const rm=e.target.closest('[data-rm]');
+  if(rm){const m=rm.closest('.mem'),r=state.result,[st]=r.groups[+m.dataset.g].students.splice(+m.dataset.s,1);r.pool.push(st);state.sel=null;renderResults(false);return;}
+  const li=e.target.closest('.mem');if(!li)return;
+  const g=+li.dataset.g,s=+li.dataset.s;
+  if(!state.sel){state.sel={g,s};}
+  else if(state.sel.g===g&&state.sel.s===s){state.sel=null;}
+  else{
+    const A=state.result.groups[state.sel.g].students,B=state.result.groups[g].students;
+    [A[state.sel.s],B[s]]=[B[s],A[state.sel.s]];state.sel=null;
+    const min=state.set.minGirls;
+    if(min>0&&state.result.groups.some(x=>groupStats(x.students).girls<min))toast(`Attention : un groupe a moins de ${min} fille(s).`,'warn');
+  }
+  renderResults(false);
+});
+$('#groups').addEventListener('change',e=>{
+  const sel=e.target.closest('.theme-sel');if(!sel)return;
+  state.result.groups[+sel.dataset.g].theme=sel.value;renderResults(false);
+});
+$('#btnGen').onclick=generate;$('#btnRegen').onclick=generate;
+
+/* ---------- groupes manuels ---------- */
+function renderPool(){
+  const r=state.result,box=$('#poolBox'),man=!!r&&r.mode==='manual';
+  box.hidden=!man;if(!man)return;
+  $('#poolCount').textContent=r.pool.length;
+  const opts='<option value="">Placer dans…</option>'+r.groups.map((_,i)=>`<option value="${i}">Groupe ${i+1}</option>`).join('');
+  $('#pool').innerHTML=r.pool.map((s,i)=>`<span class="chip pool-chip">${esc(s.name)}${s.sex==='F'?'<em class="b F">F</em>':s.sex==='M'?'<em class="b M">G</em>':''}<select class="mv" data-p="${i}" aria-label="Placer ${esc(s.name)}">${opts}</select></span>`).join('')||'<small class="hint">Tous les élèves sont placés.</small>';
+}
+$('#pool').addEventListener('change',e=>{
+  const sel=e.target.closest('.mv');if(!sel||sel.value==='')return;
+  const r=state.result,[s]=r.pool.splice(+sel.dataset.p,1);r.groups[+sel.value].students.push(s);renderResults(false);
+});
+$('#btnFillRest').onclick=()=>{
+  const r=state.result;if(!r||!r.pool.length)return;
+  shuffle(r.pool).forEach(s=>{const m=Math.min(...r.groups.map(g=>g.students.length)),c=r.groups.filter(g=>g.students.length===m);c[Math.floor(Math.random()*c.length)].students.push(s);});
+  r.pool=[];renderResults(false);toast('Les élèves restants ont été répartis au hasard.');
+};
+
+/* ---------- export ---------- */
+$('#fmtSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.fmt=b.dataset.v;$$('#fmtSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));$('#btnExport').textContent='Télécharger en '+(state.fmt==='xlsx'?'Excel':'Word');save();});
+$('#optAvg').addEventListener('change',e=>{state.opt.avg=e.target.checked;save();});
+$('#optList').addEventListener('change',e=>{state.opt.list=e.target.checked;save();});
+$('#btnExport').onclick=async()=>{
+  if(!state.result){toast("Générez d'abord les groupes.",'warn');return;}
+  if(state.result.pool&&state.result.pool.length)toast(`${state.result.pool.length} élève(s) non placé(s) ne figureront pas dans le document.`,'warn');
+  if(state.result.groups.some(g=>!g.theme)&&state.themes.length)toast("Certains groupes n'ont pas de thème : ils seront laissés vides.",'warn');
+  try{state.fmt==='xlsx'?await exportXlsx():await exportDocx();}
+  catch(err){console.error(err);toast("L'export a échoué. Rechargez la page et réessayez.",'err');}
+};
+function download(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'exposes';}
+function fileBase(){return slug([state.info.matiere||'exposes','groupes',state.info.niveau].filter(Boolean).join(' '));}
+function fmtDate(d){try{return new Date(d+'T00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});}catch(e){return d;}}
+function infoRows(){
+  const I=state.info,r=state.result,st=groupStats(state.students);
+  const rows=[['Établissement',I.school],['UFR ou filière',I.filiere],['Niveau',I.niveau],['Matière',I.matiere],['Enseignant',I.prof],['Année académique',I.year],['Date de passage',I.date?fmtDate(I.date):''],
+    ['Effectif',`${st.size} élèves (${st.girls} filles, ${st.boys} garçons)`],['Nombre de groupes',String(r.groups.length)],
+    ['Répartition',r.mode==='manual'?'Manuelle':'Aléatoire'],
+    ['Attribution des thèmes',{random:'Au hasard',order:"Dans l'ordre de la liste",manual:'Choix manuel'}[state.set.themeMode]]];
+  if(state.set.minGirls>0)rows.push(['Règle de mixité',`Au moins ${state.set.minGirls} fille(s) par groupe`]);
+  return rows.filter(x=>x[1]);
+}
+function alphaList(){
+  const col=new Intl.Collator('fr',{sensitivity:'base'}),out=[];
+  state.result.groups.forEach((g,gi)=>g.students.forEach(s=>out.push({s,n:gi+1,theme:g.theme})));
+  return out.sort((a,b)=>col.compare(a.s.name,b.s.name));
+}
+const withAvgOpt=()=>state.opt.avg&&state.result.groups.some(g=>g.students.some(hasAvg));
+
+/* ----- Excel ----- */
+async function exportXlsx(){
+  if(!window.ExcelJS){toast("La bibliothèque Excel n'est pas chargée (connexion ?). Réessayez ou choisissez Word.",'err');return;}
+  const r=state.result,I=state.info,avg=withAvgOpt();
+  const wb=new ExcelJS.Workbook();wb.creator='Exposés';wb.created=new Date();
+  const C={forest:'FF0B2B22',orange:'FFF77F00',tint:'FFFFF1DD',grey:'FFF1F5F2',white:'FFFFFFFF',line:'FFD3DDD7',rose:'FFC4245F'};
+  const thin={style:'thin',color:{argb:C.line}},box={top:thin,left:thin,bottom:thin,right:thin};
+  const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+
+  // Récapitulatif
+  const ws=wb.addWorksheet('Récapitulatif',{views:[{showGridLines:false}]});
+  ws.columns=[{width:3},{width:28},{width:56}];
+  ws.mergeCells('B2:C2');let c=ws.getCell('B2');c.value=I.title||"Répartition des groupes d'exposés";
+  c.font={name:'Calibri',size:20,bold:true,color:{argb:C.white}};c.fill=fill(C.forest);c.alignment={vertical:'middle',indent:1};ws.getRow(2).height=48;
+  ws.mergeCells('B3:C3');c=ws.getCell('B3');c.value=I.school||'';c.font={name:'Calibri',size:11,italic:true,color:{argb:C.white}};c.fill=fill(C.orange);c.alignment={vertical:'middle',indent:1};ws.getRow(3).height=22;
+  let row=5;
+  infoRows().forEach(([k,v])=>{
+    const a=ws.getCell(row,2),b=ws.getCell(row,3);
+    a.value=k;a.font={bold:true,color:{argb:C.forest}};a.fill=fill(C.tint);a.border=box;a.alignment={vertical:'middle',indent:1};
+    b.value=v;b.border=box;b.alignment={vertical:'middle',wrapText:true,indent:1};ws.getRow(row).height=21;row++;
+  });
+  row++;
+  ws.getCell(row,2).value='Résumé par groupe';ws.getCell(row,2).font={bold:true,size:13,color:{argb:C.forest}};row++;
+  const sh=['Groupe','Thème'];
+  sh.forEach((t,i)=>{const h=ws.getCell(row,2+i);h.value=t;h.font={bold:true,color:{argb:C.white}};h.fill=fill(C.forest);h.border=box;h.alignment={vertical:'middle',indent:1};});
+  row++;
+  r.groups.forEach((g,gi)=>{
+    const s=groupStats(g.students);
+    const a=ws.getCell(row,2),b=ws.getCell(row,3);
+    a.value='Groupe '+(gi+1);b.value=(g.theme||'—')+`   (${s.size} membres, ${s.girls} filles${avg&&s.avg!==null?', moyenne '+fmt(s.avg):''})`;
+    [a,b].forEach(x=>{x.border=box;x.alignment={vertical:'middle',indent:1,wrapText:true};if(gi%2)x.fill=fill(C.grey);});a.font={bold:true};row++;
+  });
+
+  // Groupes
+  const cols=[{w:12},{w:38},{w:6},{w:36},{w:9}];if(avg)cols.push({w:11});
+  const last=cols.length;
+  const g=wb.addWorksheet('Groupes',{views:[{showGridLines:false,state:'frozen',ySplit:4}],pageSetup:{orientation:'portrait',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0}});
+  g.columns=cols.map(x=>({width:x.w}));
+  g.mergeCells(1,1,1,last);c=g.getCell(1,1);c.value=I.title||"Répartition des groupes d'exposés";c.font={name:'Calibri',size:18,bold:true,color:{argb:C.white}};c.fill=fill(C.forest);c.alignment={vertical:'middle',indent:1};g.getRow(1).height=40;
+  g.mergeCells(2,1,2,last);c=g.getCell(2,1);c.value=[I.filiere,I.niveau,I.matiere].filter(Boolean).join('   |   ')||(I.school||'');c.font={size:11,italic:true,color:{argb:C.white}};c.fill=fill(C.orange);c.alignment={vertical:'middle',indent:1};g.getRow(2).height=22;
+  const heads=['Groupe','Thème','N°','Nom et prénoms','Sexe'].concat(avg?['Moyenne']:[]);
+  heads.forEach((t,i)=>{const h=g.getCell(4,i+1);h.value=t;h.font={bold:true,color:{argb:C.white}};h.fill=fill(C.forest);h.border=box;h.alignment={vertical:'middle',horizontal:'center'};});
+  g.getRow(4).height=24;
+  let rr=5;
+  r.groups.forEach((gp,gi)=>{
+    const start=rr,tint=gi%2?C.grey:C.white;
+    gp.students.forEach((s,si)=>{
+      const R=g.getRow(rr);
+      R.getCell(3).value=si+1;R.getCell(4).value=s.name;R.getCell(5).value=s.sex==='F'?'F':s.sex==='M'?'M':'';
+      if(avg){R.getCell(6).value=hasAvg(s)?s.avg:null;R.getCell(6).numFmt='0.00';}
+      for(let k=1;k<=last;k++){const x=R.getCell(k);x.border=box;x.fill=fill(tint);x.alignment={vertical:'middle',horizontal:k===4?'left':'center',indent:k===4?1:0};}
+      if(s.sex==='F')R.getCell(5).font={bold:true,color:{argb:C.rose}};
+      R.height=20;rr++;
+    });
+    const st=groupStats(gp.students),R=g.getRow(rr);
+    R.getCell(4).value=`Effectif : ${st.size}   |   Filles : ${st.girls}   |   Garçons : ${st.boys}`;
+    if(avg&&st.avg!==null){R.getCell(5).value='Moy.';R.getCell(6).value={formula:`AVERAGE(F${start}:F${rr-1})`,result:st.avg};R.getCell(6).numFmt='0.00';}
+    for(let k=1;k<=last;k++){const x=R.getCell(k);x.border={top:thin,left:thin,right:thin,bottom:{style:'medium',color:{argb:C.orange}}};x.fill=fill(C.tint);x.font={italic:true,bold:k>=5,color:{argb:C.forest}};x.alignment={vertical:'middle',horizontal:k===4?'left':'center',indent:k===4?1:0};}
+    R.height=21;
+    g.mergeCells(start,1,rr,1);g.mergeCells(start,2,rr,2);
+    const A=g.getCell(start,1);A.value='Groupe '+(gi+1);A.font={bold:true,size:13,color:{argb:C.white}};A.fill=fill(C.forest);A.alignment={vertical:'middle',horizontal:'center'};
+    const B=g.getCell(start,2);B.value=gp.theme||'';B.font={bold:true,size:12,color:{argb:C.forest}};B.fill=fill(C.tint);B.alignment={vertical:'middle',horizontal:'center',wrapText:true};
+    rr++;
+  });
+
+  // Liste alphabétique
+  if(state.opt.list){
+    const l=wb.addWorksheet('Liste alphabétique',{views:[{state:'frozen',ySplit:1,showGridLines:false}]});
+    const lc=[{h:'N°',w:6},{h:'Nom et prénoms',w:38},{h:'Sexe',w:9},{h:'Groupe',w:10},{h:'Thème',w:40}];if(avg)lc.push({h:'Moyenne',w:11});
+    l.columns=lc.map(x=>({width:x.w}));
+    lc.forEach((x,i)=>{const h=l.getCell(1,i+1);h.value=x.h;h.font={bold:true,color:{argb:C.white}};h.fill=fill(C.forest);h.border=box;h.alignment={vertical:'middle',horizontal:'center'};});
+    l.getRow(1).height=24;
+    alphaList().forEach((o,i)=>{
+      const R=l.getRow(i+2);
+      R.getCell(1).value=i+1;R.getCell(2).value=o.s.name;R.getCell(3).value=o.s.sex==='F'?'F':o.s.sex==='M'?'M':'';R.getCell(4).value=o.n;R.getCell(5).value=o.theme||'';
+      if(avg){R.getCell(6).value=hasAvg(o.s)?o.s.avg:null;R.getCell(6).numFmt='0.00';}
+      for(let k=1;k<=lc.length;k++){const x=R.getCell(k);x.border=box;if(i%2)x.fill=fill(C.grey);x.alignment={vertical:'middle',horizontal:(k===2||k===5)?'left':'center',indent:(k===2||k===5)?1:0};}
+      R.height=19;
+    });
+    l.autoFilter={from:{row:1,column:1},to:{row:1,column:lc.length}};
+  }
+  const buf=await wb.xlsx.writeBuffer();
+  download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fileBase()+'.xlsx');
+  toast('Fichier Excel téléchargé.');
+}
+
+/* ----- Word ----- */
+async function exportDocx(){
+  const D=window.docx;
+  if(!D)return exportHtmlDoc();
+  const {Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,WidthType,AlignmentType,ShadingType,BorderStyle,Footer,PageNumber,VerticalAlign,PageBreak}=D;
+  const r=state.result,I=state.info,avg=withAvgOpt(),W=9638;
+  const line={style:BorderStyle.SINGLE,size:4,color:'D3DDD7'},borders={top:line,bottom:line,left:line,right:line};
+  const none={style:BorderStyle.NONE,size:0,color:'FFFFFF'},noBorders={top:none,bottom:none,left:none,right:none};
+  const cell=(text,w,o)=>{o=o||{};return new TableCell({width:{size:w,type:WidthType.DXA},borders,verticalAlign:VerticalAlign.CENTER,
+    shading:o.fill?{type:ShadingType.CLEAR,color:'auto',fill:o.fill}:undefined,margins:{top:70,bottom:70,left:110,right:110},
+    children:[new Paragraph({alignment:o.align||AlignmentType.LEFT,children:[new TextRun({text:String(text==null?'':text),bold:o.bold,color:o.color,size:21})]})]});};
+  const children=[];
+  children.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W],rows:[new TableRow({children:[new TableCell({width:{size:W,type:WidthType.DXA},borders:noBorders,
+    shading:{type:ShadingType.CLEAR,color:'auto',fill:'0B2B22'},margins:{top:260,bottom:260,left:320,right:320},
+    children:[new Paragraph({children:[new TextRun({text:I.title||"Répartition des groupes d'exposés",bold:true,size:40,color:'FFFFFF'})]}),
+      new Paragraph({spacing:{before:80},children:[new TextRun({text:I.school||'',size:22,color:'F77F00'})]})]})]})]}));
+  children.push(new Paragraph({text:'',spacing:{after:120}}));
+  children.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[2900,W-2900],rows:infoRows().filter(x=>x[0]!=='Établissement').map(([k,v])=>new TableRow({children:[cell(k,2900,{bold:true,fill:'FFF1DD',color:'0B2B22'}),cell(v,W-2900)]}))}));
+  const widths=avg?[800,5438,1400,2000]:[800,6838,2000];
+  r.groups.forEach((g,gi)=>{
+    const st=groupStats(g.students);
+    children.push(new Paragraph({keepNext:true,spacing:{before:340,after:90},children:[
+      new TextRun({text:'Groupe '+(gi+1),bold:true,size:30,color:'F77F00'}),
+      new TextRun({text:g.theme?'   '+g.theme:'',bold:true,size:26,color:'0B2B22'})]}));
+    const head=new TableRow({tableHeader:true,cantSplit:true,children:[cell('N°',widths[0],{bold:true,fill:'0B2B22',color:'FFFFFF',align:AlignmentType.CENTER}),cell('Nom et prénoms',widths[1],{bold:true,fill:'0B2B22',color:'FFFFFF'}),cell('Sexe',widths[2],{bold:true,fill:'0B2B22',color:'FFFFFF',align:AlignmentType.CENTER})].concat(avg?[cell('Moyenne',widths[3],{bold:true,fill:'0B2B22',color:'FFFFFF',align:AlignmentType.CENTER})]:[])});
+    const rows=g.students.map((s,si)=>new TableRow({cantSplit:true,children:[cell(si+1,widths[0],{align:AlignmentType.CENTER}),cell(s.name,widths[1]),cell(s.sex==='F'?'F':s.sex==='M'?'M':'',widths[2],{align:AlignmentType.CENTER,bold:s.sex==='F',color:s.sex==='F'?'C4245F':undefined})].concat(avg?[cell(hasAvg(s)?fmt(s.avg):'',widths[3],{align:AlignmentType.CENTER})]:[])}));
+    const foot=new TableRow({cantSplit:true,children:[cell('',widths[0],{fill:'FFF1DD'}),cell(`Effectif : ${st.size}   |   Filles : ${st.girls}   |   Garçons : ${st.boys}`,widths[1],{fill:'FFF1DD',color:'0B2B22'}),cell('',widths[2],{fill:'FFF1DD'})].concat(avg?[cell(st.avg!==null?'Moy. '+fmt(st.avg):'',widths[3],{fill:'FFF1DD',bold:true,align:AlignmentType.CENTER})]:[])});
+    children.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:widths,rows:[head].concat(rows,[foot])}));
+  });
+  if(state.opt.list){
+    children.push(new Paragraph({children:[new PageBreak()]}));
+    children.push(new Paragraph({spacing:{after:140},children:[new TextRun({text:'Liste alphabétique des élèves',bold:true,size:30,color:'0B2B22'})]}));
+    const w2=avg?[700,4338,700,1100,2800]:[700,5338,700,1100,1800];
+    const heads=['N°','Nom et prénoms','Sexe','Groupe','Thème'];
+    const hr=new TableRow({tableHeader:true,children:heads.map((t,i)=>cell(t,w2[i],{bold:true,fill:'0B2B22',color:'FFFFFF',align:(i===1||i===4)?AlignmentType.LEFT:AlignmentType.CENTER}))});
+    const lr=alphaList().map((o,i)=>new TableRow({cantSplit:true,children:[cell(i+1,w2[0],{align:AlignmentType.CENTER}),cell(o.s.name,w2[1]),cell(o.s.sex==='F'?'F':o.s.sex==='M'?'M':'',w2[2],{align:AlignmentType.CENTER}),cell(o.n,w2[3],{align:AlignmentType.CENTER}),cell(o.theme||'',w2[4])]}));
+    children.push(new Table({width:{size:w2.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:w2,rows:[hr].concat(lr)}));
+  }
+  const doc=new Document({creator:'Exposés',title:I.title||'Groupes',styles:{default:{document:{run:{font:'Calibri',size:22}}}},
+    sections:[{properties:{page:{margin:{top:1134,right:1134,bottom:1134,left:1134}}},
+      footers:{default:new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({children:['Page ',PageNumber.CURRENT,' / ',PageNumber.TOTAL_PAGES],size:18,color:'6B7F75'})]})]})},
+      children}]});
+  download(await Packer.toBlob(doc),fileBase()+'.docx');
+  toast('Fichier Word téléchargé.');
+}
+function exportHtmlDoc(){
+  const r=state.result,I=state.info,avg=withAvgOpt();
+  const th='style="background:#0b2b22;color:#fff;padding:6px 10px;text-align:left"',td='style="border:1px solid #d3ddd7;padding:5px 10px"';
+  let h=`<html><head><meta charset="utf-8"><title>${esc(I.title)}</title></head><body style="font-family:Calibri,Arial,sans-serif"><h1 style="background:#0b2b22;color:#fff;padding:14px">${esc(I.title)}</h1><table style="border-collapse:collapse;width:100%">`;
+  infoRows().forEach(([k,v])=>{h+=`<tr><td ${td}><b>${esc(k)}</b></td><td ${td}>${esc(v)}</td></tr>`;});
+  h+='</table>';
+  r.groups.forEach((g,gi)=>{
+    h+=`<h2 style="color:#f77f00">Groupe ${gi+1} <span style="color:#0b2b22">${esc(g.theme||'')}</span></h2><table style="border-collapse:collapse;width:100%"><tr><th ${th}>N°</th><th ${th}>Nom et prénoms</th><th ${th}>Sexe</th>${avg?`<th ${th}>Moyenne</th>`:''}</tr>`;
+    g.students.forEach((s,i)=>{h+=`<tr><td ${td}>${i+1}</td><td ${td}>${esc(s.name)}</td><td ${td}>${s.sex||''}</td>${avg?`<td ${td}>${hasAvg(s)?fmt(s.avg):''}</td>`:''}</tr>`;});
+    h+='</table>';
+  });
+  h+='</body></html>';
+  download(new Blob(['\ufeff',h],{type:'application/msword;charset=utf-8'}),fileBase()+'.doc');
+  toast('Document Word téléchargé (version simplifiée).','warn');
+}
+
+/* ---------- réinitialiser ---------- */
+$('#btnReset').onclick=()=>{if(confirm('Effacer toutes les données saisies (élèves, thèmes, réglages) ?')){try{localStorage.removeItem(LS);}catch(e){}location.reload();}};
+
+/* ---------- démarrage ---------- */
+renderSettings();renderStudents();renderThemes();renderFeasibility();
+})();
+</script>
+</body>
+</html>
