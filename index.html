@@ -524,7 +524,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const fmt=n=>n.toFixed(2).replace('.',',');
 const uid=()=>Math.random().toString(36).slice(2,10);
 const LS='exposes-groupes-v2';
-const CLASS=["ADJE Raoul Eunice","Arama Aly A","Ballo Cheick Ahmed Tidiane Tamba","Dagnogo Dognimin Ibrahim","Dago Emmanuel Josué","Dan Esther Laetitia Carmel","DJE ANGE PHILIPPE YVAN","FLAN Noumani Nathalie Marcelle","Gnahoré Légré Grâce Emmanuella","Goumbo Bi Arthur Jean Désiré","Keita Saguidi Gaoussou","Koffi Badou Christian Yannick","KONE GNIDIAN CARINE ZENAB","N'GATTA Diakité Ahou Cindy Aurélie S.","N'guessan Frédéric Samuel Hylann","Ntambua Kalala Jeremie","Soumahoro Souleymane","Yao koffi salifou dieudonné","Diallo Ibrahim"];
+const CLASS=[["ADJE Raoul Eunice","F"],["Arama Aly A","M"],["Ballo Cheick Ahmed Tidiane Tamba","M"],["Dagnogo Dognimin Ibrahim","M"],["Dago Emmanuel Josué","M"],["Dan Esther Laetitia Carmel","F"],["DJE ANGE PHILIPPE YVAN","M"],["FLAN Noumani Nathalie Marcelle","M"],["Gnahoré Légré Grâce Emmanuella","F"],["Goumbo Bi Arthur Jean Désiré","M"],["Keita Saguidi Gaoussou","M"],["Koffi Badou Christian Yannick","M"],["KONE GNIDIAN CARINE ZENAB","F"],["N'GATTA Diakité Ahou Cindy Aurélie S.","F"],["N'guessan Frédéric Samuel Hylann","M"],["Ntambua Kalala Jeremie","M"],["Soumahoro Souleymane","M"],["Yao koffi salifou dieudonné","M"],["Diallo Ibrahim","M"]];
 
 const state={
   info:{title:"Répartition des groupes d'exposés",school:'Université Félix Houphouët-Boigny (UFHB)',year:academicYear(),filiere:'Data Science et IA',niveau:'Master 1',matiere:'',prof:'',date:''},
@@ -539,7 +539,7 @@ try{
   const j=JSON.parse(localStorage.getItem(LS)||'null');hadSaved=!!j;
   if(j){Object.assign(state.info,j.info||{});state.students=j.students||[];state.themes=j.themes||[];Object.assign(state.set,j.set||{});state.fmt=j.fmt||'xlsx';Object.assign(state.opt,j.opt||{});}
 }catch(e){}
-if(!hadSaved)state.students=CLASS.map(n=>({id:uid(),name:n,sex:'',avg:null}));
+if(!hadSaved)state.students=CLASS.map(c=>({id:uid(),name:c[0],sex:c[1],avg:null}));
 if(state.set.dist!=='manual')state.set.dist='random';
 let saveT;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({info:state.info,students:state.students,themes:state.themes,set:state.set,fmt:state.fmt,opt:state.opt}));}catch(e){}},250);}
@@ -615,7 +615,7 @@ $('#btnTemplate').onclick=()=>{
   const csv='\ufeffNom;Sexe\r\nKOUASSI Aya;F\r\nTRAORÉ Ibrahim;M\r\nYAO Marie-Ange;F\r\n';
   download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'modele-liste-eleves.csv');
 };
-$('#btnDemo').onclick=()=>addRows(CLASS.map(n=>[n]));
+$('#btnDemo').onclick=()=>addRows(CLASS.map(c=>[c[0],c[1]]));
 $('#studentTable').addEventListener('input',e=>{
   const tr=e.target.closest('tr[data-id]');if(!tr)return;
   const s=state.students.find(x=>x.id===tr.dataset.id);if(!s)return;
